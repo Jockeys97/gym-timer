@@ -40,9 +40,53 @@
   let wakeLockPending = false;
   let renderedState = null;
   let renderedDuration = null;
+  let notificationRegistration = null;
+  let firstPresetTap = true;
+  let notificationSecond = null;
+  let finishedNotificationShown = false;
   const warned = new Set();
 
   progress.style.strokeDasharray = String(circumference);
+
+  async function updateNotification() {
+    try {
+      if (!('Notification' in window) || Notification.permission !== 'granted' || !notificationRegistration) return;
+      const registration = notificationRegistration;
+      const icon = './icons/icon-192.png';
+      if (state === 'idle') {
+        const notifications = await registration.getNotifications({ tag: 'timer' });
+        notifications.forEach((notification) => notification.close());
+        return;
+      }
+      if (state === 'finished') {
+        if (finishedNotificationShown) return;
+        finishedNotificationShown = true;
+        try {
+          await registration.showNotification('Recupero finito!', {
+            tag: 'timer', renotify: true, silent: false, requireInteraction: false,
+            vibrate: [300, 150, 300, 150, 600],
+            body: 'Tocca un tempo per il prossimo recupero', icon, badge: icon,
+          });
+        } catch { finishedNotificationShown = false; }
+        return;
+      }
+      const seconds = Math.ceil(remaining / 1000);
+      const time = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+      const finish = new Date(endTime).toLocaleTimeString('it-IT', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+      });
+      const body = state === 'running'
+        ? `Restano ${time} · finisce alle ${finish}` : `In pausa · ${time}`;
+      const actions = [
+        state === 'running' ? { action: 'pause', title: 'Pausa' } : { action: 'resume', title: 'Riprendi' },
+        { action: 'stop', title: 'Stop' },
+      ];
+      await registration.showNotification('Timer Palestra', {
+        tag: 'timer', renotify: false, silent: true, requireInteraction: true,
+        icon, badge: icon, body, data: { state }, actions,
+      });
+    } catch { /* Notifications are optional. */ }
+  }
 
   function unlockAudio() {
     try {
@@ -139,7 +183,7 @@
     interval = null;
   }
 
-  function update() {
+  function update(notify = true) {
     if (state !== 'running') return;
     remaining = Math.max(0, Math.min(duration, endTime - Date.now()));
     if (remaining === 0) {
@@ -148,8 +192,13 @@
       releaseWakeLock();
       beep(true);
       try { if (navigator.vibrate) navigator.vibrate([300, 150, 300, 150, 600]); } catch { /* Optional. */ }
+      void updateNotification();
     } else {
       const seconds = Math.ceil(remaining / 1000);
+      if (seconds !== notificationSecond) {
+        notificationSecond = seconds;
+        if (notify) void updateNotification();
+      }
       if (seconds <= 3 && !warned.has(seconds)) {
         warned.add(seconds);
         beep();
@@ -175,18 +224,28 @@
 
   for (const button of presets) {
     button.addEventListener('click', () => {
+      if (firstPresetTap) {
+        firstPresetTap = false;
+        try {
+          if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission().then(() => updateNotification()).catch(() => {});
+          }
+        } catch { /* Permission may be unavailable. */ }
+      }
       unlockAudio();
       duration = Number(button.dataset.seconds) * 1000;
       remaining = duration;
       endTime = Date.now() + remaining;
       warned.clear();
       state = 'running';
+      finishedNotificationShown = false;
+      notificationSecond = Math.ceil(remaining / 1000);
       startUpdates();
+      void updateNotification();
     });
   }
 
-  pauseButton.addEventListener('click', () => {
-    unlockAudio();
+  function pause(notify = true) {
     if (state === 'running') {
       update();
       if (state !== 'running') return;
@@ -194,15 +253,27 @@
       stopUpdates();
       releaseWakeLock();
       render();
-    } else if (state === 'paused') {
+      if (notify) void updateNotification();
+    }
+  }
+
+  function resume(notify = true) {
+    if (state === 'paused') {
       endTime = Date.now() + remaining;
       state = 'running';
+      notificationSecond = Math.ceil(remaining / 1000);
       startUpdates();
+      if (notify) void updateNotification();
     }
+  }
+
+  pauseButton.addEventListener('click', () => {
+    unlockAudio();
+    if (state === 'running') pause();
+    else if (state === 'paused') resume();
   });
 
-  stopButton.addEventListener('click', () => {
-    unlockAudio();
+  function stop(notify = true) {
     state = 'idle';
     remaining = 0;
     duration = 0;
@@ -210,17 +281,41 @@
     stopUpdates();
     releaseWakeLock();
     render();
+    if (notify) void updateNotification();
+  }
+
+  stopButton.addEventListener('click', () => {
+    unlockAudio();
+    stop();
   });
 
   document.addEventListener('visibilitychange', () => {
-    if (state !== 'running') return;
-    update();
-    if (document.visibilityState === 'visible') void acquireWakeLock();
-    else releaseWakeLock();
+    if (state === 'running') {
+      update(false);
+      if (document.visibilityState === 'visible') void acquireWakeLock();
+      else releaseWakeLock();
+    }
+    void updateNotification();
   });
 
   render();
   if ('serviceWorker' in navigator) {
+    try {
+      navigator.serviceWorker.ready.then((registration) => {
+        notificationRegistration = registration;
+        void updateNotification();
+      }).catch(() => {});
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data?.type !== 'timer-action') return;
+        if (event.data.action === 'pause') pause(false);
+        else if (event.data.action === 'resume') resume(false);
+        else if (event.data.action === 'stop') stop(false);
+        else return;
+        void updateNotification();
+      });
+      // Deliver messages from the worker even before this page is controlled.
+      if (navigator.serviceWorker.startMessages) navigator.serviceWorker.startMessages();
+    } catch { /* Notifications are optional. */ }
     const hadController = Boolean(navigator.serviceWorker.controller);
     let reloading = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {

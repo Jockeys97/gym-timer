@@ -1,16 +1,39 @@
 'use strict';
 
-const CACHE_NAME = 'timer-palestra-v3';
+const CACHE_NAME = 'timer-palestra-v4';
 const PRECACHE = [
   './',
   './index.html',
-  './styles.css?v=3',
-  './app.js?v=3',
+  './styles.css?v=4',
+  './app.js?v=4',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/apple-touch-icon.png',
 ];
+
+self.addEventListener('notificationclick', (event) => {
+  const notification = event.notification;
+  const action = event.action;
+  try {
+    if (['pause', 'resume', 'stop'].includes(action)) {
+      event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+        if (list.length) {
+          list.forEach((client) => client.postMessage({ type: 'timer-action', action }));
+        } else {
+          return self.clients.openWindow('./');
+        }
+      }).catch(() => {}));
+      if (action === 'stop') notification.close();
+      return;
+    }
+    if (!['running', 'paused'].includes(notification.data?.state)) notification.close();
+    event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      if (list.length) return list[0].focus();
+      return self.clients.openWindow('./');
+    }).catch(() => {}));
+  } catch { /* Notification interactions are optional. */ }
+});
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE)).then(() => self.skipWaiting()));
