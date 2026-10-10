@@ -1,11 +1,11 @@
 'use strict';
 
-const CACHE_NAME = 'timer-palestra-v1';
+const CACHE_NAME = 'timer-palestra-v2';
 const PRECACHE = [
   './',
   './index.html',
-  './styles.css',
-  './app.js',
+  './styles.css?v=2',
+  './app.js?v=2',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
@@ -23,14 +23,31 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET' || new URL(event.request.url).origin !== self.location.origin) return;
+  const url = new URL(event.request.url);
+  if (event.request.method !== 'GET' || url.origin !== self.location.origin) return;
+  const navigation = event.request.mode === 'navigate';
+  const networkFirst = navigation || /\.(html|css|js|json)$/i.test(url.pathname);
   event.respondWith(caches.open(CACHE_NAME).then(async (cache) => {
-    const cached = await cache.match(event.request);
-    if (cached) return cached;
-    const response = await fetch(event.request);
-    if (response.ok && response.type === 'basic') {
-      event.waitUntil(cache.put(event.request, response.clone()));
+    async function refresh() {
+      const response = await fetch(event.request);
+      if (response.ok && response.type === 'basic') {
+        event.waitUntil(cache.put(event.request, response.clone()));
+      }
+      return response;
     }
-    return response;
+    if (networkFirst) {
+      try {
+        return await refresh();
+      } catch (error) {
+        const cached = await cache.match(event.request);
+        if (cached) return cached;
+        if (navigation) {
+          const page = await cache.match('./index.html');
+          if (page) return page;
+        }
+        throw error;
+      }
+    }
+    return (await cache.match(event.request)) || refresh();
   }));
 });

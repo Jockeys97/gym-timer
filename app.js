@@ -201,6 +201,14 @@
 
   render();
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(() => { /* Requires HTTPS or localhost. */ });
+    const hadController = Boolean(navigator.serviceWorker.controller);
+    let reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController || reloading) return;
+      reloading = true;
+      window.location.reload();
+    });
+    navigator.serviceWorker.register('./sw.js').then((reg) => reg.update())
+      .catch(() => { /* Requires HTTPS or localhost; updates may be offline. */ });
   }
 })();

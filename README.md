@@ -7,3 +7,5 @@ Per provarla: `python3 -m http.server 8000`, poi apri `http://localhost:8000/`. 
 Dopo la prima apertura completata, il service worker conserva l'app per l'uso offline. Incrementa `CACHE_NAME` in `sw.js` quando aggiorni i file. Audio, vibrazione e schermo sempre acceso dipendono dal browser; in background il sistema può sospendere gli avvisi, ma al ritorno il timer ricalcola il tempo dalla scadenza. Il movimento ridotto disattiva i lampeggi.
 
 Le icone sono già incluse. Per rigenerarle serve Python con Pillow: `python3 scripts/make_icons.py`.
+
+Per aggiornare subito, ricarica la pagina (su computer: Ctrl+Maiusc+R o Cmd+Maiusc+R). Se resta una versione vecchia, elimina i dati del sito nelle impostazioni del browser e riaprilo online: questo rimuove anche la copia offline. In Chrome su Android disattiva **Sito desktop** per usare il viewport del telefono.
