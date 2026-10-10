@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0f14">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Timer">
+  <title>Timer Palestra</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="./icons/icon-192.png">
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./app.js" defer></script>
+</head>
+<body data-state="idle">
+  <main class="timer-app">
+    <header><span class="brand-mark" aria-hidden="true"></span><h1>Timer Palestra</h1></header>
+    <section class="timer-panel" aria-label="Tempo di recupero">
+      <div class="timer-face">
+        <svg class="progress-ring" viewBox="0 0 320 320" aria-hidden="true">
+          <circle class="ring-track" cx="160" cy="160" r="146"></circle>
+          <circle id="progress" class="ring-progress" cx="160" cy="160" r="146"></circle>
+        </svg>
+        <div class="timer-center">
+          <span id="timer-label" class="eyebrow">RECUPERO</span>
+          <span id="countdown" role="timer" aria-label="Tempo rimanente" aria-live="off">00:00</span>
+          <span id="finish-label" class="finish-label" hidden>Fatto!</span>
+        </div>
+      </div>
+      <p id="status" role="status" aria-live="polite">Scegli il recupero</p>
+    </section>
+    <section class="presets" aria-label="Scegli la durata del recupero">
+      <button class="preset" type="button" data-seconds="30" aria-pressed="false" aria-label="30 secondi">0:30</button>
+      <button class="preset" type="button" data-seconds="45" aria-pressed="false" aria-label="45 secondi">0:45</button>
+      <button class="preset" type="button" data-seconds="60" aria-pressed="false" aria-label="1 minuto">1:00</button>
+      <button class="preset" type="button" data-seconds="75" aria-pressed="false" aria-label="1 minuto e 15 secondi">1:15</button>
+      <button class="preset" type="button" data-seconds="90" aria-pressed="false" aria-label="1 minuto e 30 secondi">1:30</button>
+    </section>
+    <div class="controls" aria-label="Controlli del timer">
+      <button id="stop" type="button" disabled>Stop</button>
+      <button id="pause" type="button" disabled>Pausa</button>
+    </div>
+    <p class="hint">Tocca un tempo per partire</p>
+  </main>
+</body>
+</html>
