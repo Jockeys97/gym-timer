@@ -1,11 +1,11 @@
 'use strict';
 
-const CACHE_NAME = 'timer-palestra-v5';
+const CACHE_NAME = 'timer-palestra-v6';
 const PRECACHE = [
   './',
   './index.html',
-  './styles.css?v=3',
-  './app.js?v=3',
+  './styles.css?v=6',
+  './app.js?v=6',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',

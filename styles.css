@@ -2,103 +2,80 @@
   color-scheme: dark;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: #0b0f14;
   color: #fff;
   --accent: #d4ff48;
   --muted: #a8b1bf;
+  /* Visible height: JS sets --vvh from visualViewport; svh (toolbar shown) as fallback. */
   --app-height: var(--vvh, 100vh);
-  --column-width: calc(.62 * var(--app-height));
-  --unit: min(1vw, calc(.0062 * var(--app-height)));
-  --padding-top: max(8px, env(safe-area-inset-top, 0px));
-  --padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-  --padding-bottom: calc(12px + max(env(safe-area-inset-bottom, 0px), env(safe-area-max-inset-bottom, 0px)));
+  --gap: 10px;
+  --preset-h: 72px;
+  --control-h: 56px;
 }
-@supports (height: 100svh) {
-  :root { --app-height: var(--vvh, 100svh); }
-}
+@supports (height: 100svh) { :root { --app-height: var(--vvh, 100svh); } }
+@media (min-height: 760px) { :root { --preset-h: 80px; --control-h: 60px; --gap: 12px; } }
+@media (min-height: 900px) { :root { --preset-h: 92px; --control-h: 64px; --gap: 14px; } }
+@media (max-height: 640px) { :root { --preset-h: 64px; --control-h: 56px; --gap: 8px; } }
 * { box-sizing: border-box; }
-body {
-  margin: 0;
-  min-height: var(--app-height);
-  padding: var(--padding-top)
-    max(8px, env(safe-area-inset-right, 0px))
-    var(--padding-bottom)
-    max(8px, env(safe-area-inset-left, 0px));
-  background: #0b0f14;
-}
-/* Shared spacing follows the viewport-derived column, including on desktop-site viewports. */
+html, body { margin: 0; background: #0b0f14; }
+body { min-height: var(--app-height); }
 .timer-app {
-  --gap: calc(2 * var(--unit));
-  --status-height: calc(5.4 * var(--unit));
-  --controls-height: clamp(52px, calc(.075 * var(--app-height)), 72px);
-  --preset-height: clamp(56px, calc(.1125 * var(--app-height)), 104px);
-  --presets-min-height: calc(144px + 2 * var(--gap));
-  --panel-min-height: calc(110px + var(--status-height) + var(--gap));
-  --fixed-height: calc(5.04 * var(--unit) + var(--panel-min-height) + var(--controls-height) + 3.84 * var(--unit) + 4 * var(--gap));
-  width: min(100%, var(--column-width));
-  height: calc(var(--app-height) - var(--padding-top) - var(--padding-bottom));
-  /* Truly tiny screens scroll rather than overlapping the controls. */
-  min-height: calc(var(--fixed-height) + var(--presets-min-height));
+  width: min(100%, 560px);
+  height: var(--app-height);
   margin: 0 auto;
+  padding: calc(env(safe-area-inset-top, 0px) + 12px)
+    calc(env(safe-area-inset-right, 0px) + 14px)
+    calc(env(safe-area-inset-bottom, 0px) + 12px)
+    calc(env(safe-area-inset-left, 0px) + 14px);
   display: flex;
   flex-direction: column;
-  gap: calc(2 * var(--unit));
+  gap: var(--gap);
 }
-header { display: flex; align-items: center; justify-content: center; gap: calc(2.5 * var(--unit)); flex: none; }
-h1 { font-size: 15px; font-size: calc(4.2 * var(--unit)); line-height: 1.2; font-weight: 650; letter-spacing: .025em; margin: 0; }
-.brand-mark { width: calc(2.5 * var(--unit)); height: calc(2.5 * var(--unit)); border-radius: 50%; background: var(--accent); }
+header { display: flex; align-items: center; justify-content: center; gap: 9px; flex: none; }
+h1 { font-size: 16px; line-height: 1.2; font-weight: 650; letter-spacing: .025em; margin: 0; }
+.brand-mark { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+/* The ONLY flexible block: the ring takes whatever height is left, never more. */
 .timer-panel {
-  text-align: center;
   flex: 1 1 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: calc(2 * var(--unit));
+  gap: 6px;
+  text-align: center;
   container-type: size;
 }
-/* The panel container also caps the ring by the height left above the buttons. */
 .timer-face {
   position: relative;
-  width: min(84 * var(--unit), calc(.38 * var(--app-height)));
-  width: min(84cqw, max(0px, 100cqh - var(--status-height) - var(--gap)));
   flex: none;
   aspect-ratio: 1;
+  width: min(88cqw, 100cqh - 30px);
+  min-width: 0;
   container-type: inline-size;
 }
 .progress-ring { display: block; width: 100%; height: 100%; transform: rotate(-90deg); }
 .progress-ring circle { fill: none; stroke-width: 9; }
 .ring-track { stroke: #242c37; }
 .ring-progress { stroke: var(--accent); stroke-linecap: round; }
-.timer-center { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px; gap: 3cqw; }
-.eyebrow { font-size: 12px; font-size: 4.5cqw; letter-spacing: .2em; color: var(--muted); font-weight: 700; }
-#countdown { font-size: 64px; font-size: 24cqw; font-weight: 800; line-height: 1; letter-spacing: -.06em; font-variant-numeric: tabular-nums; }
-.finish-label { font-size: 22px; font-size: 7cqw; font-weight: 800; }
+.timer-center { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 3cqw; }
+.eyebrow { font-size: 4.5cqw; letter-spacing: .2em; color: var(--muted); font-weight: 700; }
+#countdown { font-size: 24cqw; font-weight: 800; line-height: 1; letter-spacing: -.06em; font-variant-numeric: tabular-nums; }
+.finish-label { font-size: 7cqw; font-weight: 800; }
 [hidden] { display: none !important; }
-#status { margin: 0; flex: none; color: var(--muted); font-size: 17px; font-size: calc(4.5 * var(--unit)); line-height: 1.2; }
-.presets {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-template-rows: repeat(3, minmax(0, 1fr));
-  gap: calc(2 * var(--unit));
-  flex: 0 1 auto;
-  height: calc(3 * var(--preset-height) + 2 * var(--gap));
-  min-height: var(--presets-min-height);
-  /* The ring yields first; presets then shrink before the controls. */
-  max-height: calc(100% - var(--fixed-height));
-}
-button { font: inherit; border: 1px solid #323c49; border-radius: calc(4.5 * var(--unit)); padding: calc(2 * var(--unit)); min-width: 0; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
-.preset { min-height: 48px; background: #18202b; color: #fff; font-size: 28px; font-size: calc(8.5 * var(--unit)); font-weight: 750; font-variant-numeric: tabular-nums; }
+#status { margin: 0; flex: none; height: 24px; line-height: 24px; color: var(--muted); font-size: 17px; }
+.presets { flex: none; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: var(--preset-h); gap: var(--gap); }
+button { font: inherit; border: 1px solid #323c49; border-radius: 16px; padding: 0; margin: 0; line-height: 1; overflow: hidden; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.preset { height: var(--preset-h); background: #18202b; color: #fff; font-size: min(calc(var(--preset-h) * .42), 9vw); font-weight: 750; font-variant-numeric: tabular-nums; }
 .preset:last-child { grid-column: 1 / -1; }
 .preset[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #0b0f14; }
 button:active:not(:disabled) { filter: brightness(.85); }
-button:focus-visible { outline: calc(.8 * var(--unit)) solid #fff; outline-offset: calc(.6 * var(--unit)); }
-.controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: calc(2 * var(--unit)); flex: none; }
-.controls button { height: var(--controls-height); background: transparent; color: #fff; font-size: 18px; font-size: calc(5 * var(--unit)); font-weight: 650; }
+button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.controls { flex: none; display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
+.controls button { height: var(--control-h); background: transparent; color: #fff; font-size: 19px; font-weight: 650; }
 .controls button:disabled { color: #7b8796; border-color: #242c37; cursor: default; }
-.hint { color: var(--muted); text-align: center; font-size: 12px; font-size: calc(3.2 * var(--unit)); line-height: 1.2; margin: 0; flex: none; }
+.hint { flex: none; color: var(--muted); text-align: center; font-size: 12px; line-height: 16px; margin: 0; }
 body[data-state="running"] #status { color: var(--accent); }
 body.finished { background: #d4ff48; color: #0b0f14; animation: finish-flash .65s ease-in-out 6; }
 body.finished .eyebrow, body.finished #status, body.finished .hint { color: #0b0f14; }
@@ -108,26 +85,22 @@ body.finished .controls button { color: #0b0f14; border-color: #0b0f14; }
 body.finished .controls button:disabled { opacity: .5; }
 body.finished button:focus-visible { outline-color: #0b0f14; }
 @keyframes finish-flash { 50% { background: #ffffff; } }
+/* Short landscape: ring left, buttons right. */
 @media (orientation: landscape) and (max-height: 600px) {
+  :root { --preset-h: 56px; --control-h: 48px; --gap: 8px; }
   .timer-app {
     width: 100%;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-rows: auto minmax(var(--presets-min-height), 1fr) auto auto;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto 1fr auto auto;
     grid-template-areas: "header header" "timer presets" "timer controls" "hint hint";
-    --unit: min(1vw, calc(.02 * var(--app-height)));
-    --status-height: calc(3.6 * var(--unit));
-    min-height: calc(5.4 * var(--unit) + 3 * var(--gap) + max(var(--panel-min-height), var(--presets-min-height) + var(--controls-height) + var(--gap)));
+    column-gap: 20px;
   }
   header { grid-area: header; }
   .timer-panel { grid-area: timer; }
-  .presets { grid-area: presets; height: 100%; max-height: calc(3 * var(--preset-height) + 2 * var(--gap)); align-self: center; }
-  .preset { min-height: 48px; font-size: calc(5 * var(--unit)); }
+  .presets { grid-area: presets; align-self: end; }
   .controls { grid-area: controls; }
-  .controls button { font-size: calc(3 * var(--unit)); }
-  h1 { font-size: calc(2.5 * var(--unit)); }
-  #status { font-size: calc(3 * var(--unit)); }
-  .hint { grid-area: hint; font-size: calc(2 * var(--unit)); }
+  .hint { grid-area: hint; }
 }
 @media (prefers-reduced-motion: reduce) {
   body.finished { animation: none; }
