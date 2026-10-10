@@ -1,6 +1,26 @@
 (() => {
   'use strict';
 
+  // Follow the visible area as browser bars move, without resizing for pinch zoom.
+  let viewportFrame = null;
+  function updateViewportHeight() {
+    viewportFrame = null;
+    const viewport = window.visualViewport;
+    const height = viewport && Math.abs(viewport.scale - 1) < 0.01
+      ? viewport.height : window.innerHeight;
+    document.documentElement.style.setProperty('--vvh', `${Math.round(height)}px`);
+  }
+  function scheduleViewportHeight() {
+    if (viewportFrame === null) viewportFrame = requestAnimationFrame(updateViewportHeight);
+  }
+  updateViewportHeight();
+  window.addEventListener('resize', scheduleViewportHeight);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', scheduleViewportHeight);
+  window.addEventListener('orientationchange', () => {
+    scheduleViewportHeight();
+    setTimeout(scheduleViewportHeight, 300);
+  });
+
   const countdown = document.querySelector('#countdown');
   const progress = document.querySelector('#progress');
   const status = document.querySelector('#status');
