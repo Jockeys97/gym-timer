@@ -89,7 +89,7 @@ h1 { font-size: 15px; font-size: calc(4.2 * var(--unit)); line-height: 1.2; font
   /* The ring yields first; presets then shrink before the controls. */
   max-height: calc(100% - var(--fixed-height));
 }
-button { font: inherit; border: 1px solid #323c49; border-radius: calc(4.5 * var(--unit)); padding: calc(2 * var(--unit)); min-width: 0; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+button { font: inherit; display: flex; align-items: center; justify-content: center; line-height: 1; border: 1px solid #323c49; border-radius: calc(4.5 * var(--unit)); padding: 0 calc(2 * var(--unit)); min-width: 0; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .preset { min-height: 48px; background: #18202b; color: #fff; font-size: 28px; font-size: calc(8.5 * var(--unit)); font-weight: 750; font-variant-numeric: tabular-nums; }
 .preset:last-child { grid-column: 1 / -1; }
 .preset[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #0b0f14; }
